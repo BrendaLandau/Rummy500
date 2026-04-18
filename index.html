@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rummy 500</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Crimson+Pro:ital,wght@0,400;1,400&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script>
+const app = firebase.initializeApp({
+  apiKey: "AIzaSyASIrZD4PsGaC90xBo1TO8LpQo5w0LQ6Eo",
+  authDomain: "rummy-500-78b73.firebaseapp.com",
+  databaseURL: "https://rummy-500-78b73-default-rtdb.firebaseio.com",
+  projectId: "rummy-500-78b73",
+  storageBucket: "rummy-500-78b73.firebasestorage.app",
+  messagingSenderId: "96768077292",
+  appId: "1:96768077292:web:0f155c1af22892bfbba4c9"
+});
+const db = firebase.database();
+</script>
+<style>
+:root{--felt:#1a4a2e;--felt-dark:#0e2a1a;--gold:#c9a84c;--gold2:#e8c96a;--cream:#f5f0e8;--red:#c0392b;--cw:62px;--ch:90px}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--felt-dark);font-family:'Crimson Pro',serif;color:var(--cream);min-height:100vh;overflow-x:hidden;background-image:radial-gradient(ellipse at 20% 50%,rgba(26,74,46,.7) 0%,transparent 60%)}
+#lobby{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem;gap:1.5rem}
+h1{font-family:'Playfair Display',serif;font-size:clamp(3rem,10vw,6rem);font-weight:900;color:var(--gold);text-align:center;letter-spacing:.05em}
+.sub{text-align:center;opacity:.5;font-style:italic;letter-spacing:.15em}
+.suits{font-size:2rem;letter-spacing:.4em;opacity:.6;text-align:center}
+.box{background:rgba(0,0,0,.35);border:1px solid rgba(201,168,76,.3);border-radius:14px;padding:1.8rem;width:min(420px,100%)}
+.box h2{font-family:'Playfair Display',serif;color:var(--gold);font-size:1.3rem;margin-bottom:1rem;text-align:center}
+input{width:100%;background:rgba(0,0,0,.4);border:1px solid rgba(201,168,76,.35);border-radius:8px;color:var(--cream);font-family:'Crimson Pro',serif;font-size:1.1rem;padding:.65rem 1rem;outline:none;margin-bottom:.7rem}
+input:focus{border-color:var(--gold)}
+input::placeholder{color:rgba(245,240,232,.3)}
+.btn{width:100%;padding:.75rem;border:none;border-radius:8px;font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;cursor:pointer;transition:all .2s;letter-spacing:.04em}
+.gold{background:linear-gradient(135deg,var(--gold),var(--gold2));color:#111}
+.gold:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(201,168,76,.4)}
+.out{background:transparent;border:1px solid rgba(201,168,76,.45);color:var(--gold);margin-top:.5rem}
+.out:hover{background:rgba(201,168,76,.08)}
+.btn:disabled{opacity:.4;cursor:not-allowed;transform:none!important}
+.or{text-align:center;color:rgba(245,240,232,.3);font-style:italic;margin:.8rem 0;position:relative}
+.or::before,.or::after{content:'';position:absolute;top:50%;width:38%;height:1px;background:rgba(201,168,76,.18)}
+.or::before{left:0}.or::after{right:0}
+.codebox{background:rgba(0,0,0,.5);border:1px solid var(--gold);border-radius:10px;padding:1rem;text-align:center;margin:1rem 0}
+.codebox .code{font-family:'Playfair Display',serif;font-size:2.8rem;font-weight:900;color:var(--gold);letter-spacing:.35em}
+.codebox p{font-size:.82rem;color:rgba(245,240,232,.45);margin-top:.3rem;font-style:italic}
+.waiting{display:flex;align-items:center;justify-content:center;gap:.6rem;color:rgba(245,240,232,.55);font-style:italic}
+.dots span{width:6px;height:6px;border-radius:50%;background:var(--gold);animation:dp 1.2s infinite ease-in-out;display:inline-block;margin:0 2px}
+.dots span:nth-child(2){animation-delay:.2s}.dots span:nth-child(3){animation-delay:.4s}
+@keyframes dp{0%,80%,100%{transform:scale(.5);opacity:.2}40%{transform:scale(1);opacity:1}}
+#game{display:none;flex-direction:column;min-height:100vh;padding:.4rem;gap:.4rem}
+.ghdr{display:flex;align-items:center;justify-content:space-between;padding:.5rem .8rem;background:rgba(0,0,0,.35);border-radius:10px;border:1px solid rgba(201,168,76,.18);flex-wrap:wrap;gap:.4rem}
+.gtitle{font-family:'Playfair Display',serif;color:var(--gold);font-size:1rem}
+.scores{display:flex;gap:1.2rem}
+.si .n{font-size:.7rem;color:rgba(245,240,232,.45)}
+.si .v{font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--gold)}
+.si.act .n{color:var(--gold2)}.si.act .v{color:#fff}
+.turn{font-size:.78rem;font-style:italic;background:rgba(201,168,76,.1);padding:.25rem .7rem;border-radius:20px;border:1px solid rgba(201,168,76,.18);color:rgba(245,240,232,.55)}
+.turn.me{color:var(--gold);border-color:var(--gold)}
+.zone{background:rgba(0,0,0,.2);border-radius:10px;padding:.6rem .8rem;border:1px solid rgba(255,255,255,.05)}
+.zlbl{font-size:.7rem;color:rgba(245,240,232,.38);margin-bottom:.45rem;text-transform:uppercase;letter-spacing:.1em}
+.ohand{display:flex;flex-wrap:wrap;gap:2px}
+.cbk{width:var(--cw);height:var(--ch);border-radius:8px;background:linear-gradient(135deg,#1a3a5c,#0d2040);border:2px solid rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:1.3rem}
+.table{display:flex;gap:.8rem;align-items:flex-start;flex-wrap:wrap;padding:.3rem}
+.pile{display:flex;flex-direction:column;align-items:center;gap:.4rem}
+.plbl{font-size:.68rem;color:rgba(245,240,232,.38);text-transform:uppercase;letter-spacing:.08em}
+.deck{width:var(--cw);height:var(--ch);border-radius:8px;background:linear-gradient(135deg,#1a3a5c,#0d2040);border:2px solid rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:1.5rem;transition:transform .15s}
+.deck:hover{transform:scale(1.05)}
+.dcnt{font-size:.72rem;color:rgba(245,240,232,.45)}
+.melds-area{width:100%;background:rgba(0,0,0,.12);border-radius:10px;padding:.5rem;border:1px dashed rgba(201,168,76,.18)}
+.melds-wrap{display:flex;flex-wrap:wrap;gap:8px}
+.meld-grp{display:flex;background:rgba(255,255,255,.04);border-radius:6px;padding:4px 8px 4px 4px;border:1px solid rgba(201,168,76,.18);cursor:pointer}
+.meld-grp .card{margin-right:-26px}
+.meld-grp .card:last-child{margin-right:0}
+.meld-grp:hover{border-color:var(--gold);box-shadow:0 0 8px rgba(201,168,76,.3)}
+.card{width:var(--cw);height:var(--ch);border-radius:8px;background:var(--cream);border:2px solid rgba(0,0,0,.12);display:flex;flex-direction:column;padding:3px 4px;cursor:pointer;box-shadow:2px 3px 8px rgba(0,0,0,.4);transition:transform .15s;position:relative;user-select:none;flex-shrink:0}
+.card:hover{transform:translateY(-4px)}
+.card.sel{transform:translateY(-12px);box-shadow:0 12px 24px rgba(201,168,76,.5);border-color:var(--gold);outline:2px solid var(--gold)}
+.card.dis{cursor:default;pointer-events:none}
+.card .rk{font-family:'Playfair Display',serif;font-size:.88rem;font-weight:700;line-height:1}
+.card .st{font-size:.68rem;line-height:1}
+.card .sc{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:1.5rem;opacity:.18}
+.card.red .rk,.card.red .st{color:var(--red)}.card.red .sc{color:var(--red)}
+.card.blk .rk,.card.blk .st{color:#1a1a1a}.card.blk .sc{color:#1a1a1a}
+.disc-row{display:flex;flex-wrap:wrap;gap:0;padding-bottom:4px}
+.disc-wrap{position:relative;flex-shrink:0;margin-right:-26px;margin-bottom:6px}
+.disc-wrap:last-child{margin-right:0}
+.disc-wrap:hover .card{transform:translateY(-6px);z-index:10;position:relative}
+.phand{display:flex;flex-wrap:wrap;gap:4px;min-height:calc(var(--ch) + 16px)}
+.abar{display:flex;gap:.5rem;flex-wrap:wrap;padding:.5rem;background:rgba(0,0,0,.25);border-radius:10px;border:1px solid rgba(201,168,76,.15);align-items:center}
+.abar .btn{width:auto;padding:.45rem 1rem;font-size:.88rem}
+.hint{font-size:.78rem;font-style:italic;color:rgba(245,240,232,.45);margin-left:auto}
+#toast{position:fixed;top:1rem;left:50%;transform:translateX(-50%);background:rgba(14,42,26,.96);border:1px solid var(--gold);color:var(--cream);padding:.6rem 1.4rem;border-radius:30px;font-size:.9rem;pointer-events:none;opacity:0;transition:opacity .3s;z-index:200;white-space:nowrap}
+#toast.show{opacity:1}
+#wins{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);backdrop-filter:blur(6px);z-index:150;align-items:center;justify-content:center;flex-direction:column;gap:1.5rem;padding:2rem;text-align:center}
+#wins.open{display:flex}
+#wins h2{font-family:'Playfair Display',serif;font-size:2.5rem;color:var(--gold)}
+#wins p{font-size:1.1rem;color:rgba(245,240,232,.7);line-height:1.8}
+#wins .btn{width:200px}
+@media(max-width:480px){:root{--cw:50px;--ch:72px}.card .rk{font-size:.75rem}.card .sc{font-size:1.2rem}}
+
+@keyframes pulse-gold{0%,100%{box-shadow:0 0 0 0 rgba(201,168,76,0);border-color:rgba(201,168,76,.3)}50%{box-shadow:0 0 0 8px rgba(201,168,76,.3);border-color:var(--gold)}}
+@keyframes pulse-hint{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.03)}}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-4px)}75%{transform:translateX(4px)}}
+.flash-hint{animation:pulse-gold 1.2s ease-in-out infinite}
+.hint-label{animation:pulse-hint 1s ease-in-out infinite;color:var(--gold)!important}
+.your-turn-glow{animation:pulse-gold 1s ease-in-out 3}
+@keyframes new-card{0%{transform:translateY(-20px) scale(1.1);box-shadow:0 16px 32px rgba(201,168,76,.8);border-color:var(--gold);opacity:0}30%{opacity:1}100%{transform:translateY(0) scale(1);box-shadow:2px 3px 8px rgba(0,0,0,.4);border-color:rgba(0,0,0,.12)}}
+.new-card{animation:new-card .5s ease-out forwards;border-color:var(--gold)!important;outline:2px solid var(--gold)}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+<div id="wins">
+  <h2 id="wt">Round Over</h2>
+  <p id="wm"></p>
+  <button class="btn gold" id="wbtn" onclick="startNextRound()">I'm Ready!</button>
+  <button class="btn out" onclick="doGoLobby()">Leave Game</button>
+</div>
+<div id="lobby">
+  <div><h1>RUMMY 500</h1><div class="suits">♠ ♥ ♦ ♣</div><p class="sub">classic card game · online multiplayer</p></div>
+  <div class="box">
+    <h2>Your Name</h2>
+    <input id="pname" type="text" placeholder="Enter your name..." maxlength="16">
+    <button class="btn gold" onclick="doCreate()">Create New Game</button>
+    <div class="or">or</div>
+    <input id="jcode" type="text" placeholder="Enter room code..." maxlength="6" style="text-transform:uppercase">
+    <button class="btn out" onclick="doJoin()">Join Game</button>
+    <button class="btn out" onclick="doRejoin()" style="margin-top:.3rem;font-size:.9rem">↩ Rejoin Existing Game</button>
+  </div>
+  <div id="waiting" style="display:none">
+    <div class="box">
+      <div class="codebox"><div class="code" id="dcode">——</div><p>Share this code with your opponent</p></div>
+      <div class="waiting"><div class="dots"><span></span><span></span><span></span></div>&nbsp;Waiting for opponent…</div>
+      <button class="btn out" style="margin-top:1rem" onclick="doGoLobby()">Cancel</button>
+    </div>
+  </div>
+</div>
+<div id="game">
+  <div class="ghdr">
+    <div class="gtitle">♠ RUMMY 500</div>
+    <div class="scores"><div class="si" id="sme"><div class="n" id="sme-n">You</div><div class="v" id="sme-v">0</div></div><div class="si" id="sopp"><div class="n" id="sopp-n">Opp</div><div class="v" id="sopp-v">0</div></div></div>
+    <div class="turn" id="turni">…</div>
+    <div id="roomcode" style="font-size:.7rem;color:rgba(201,168,76,.5);letter-spacing:.1em;cursor:pointer" onclick="showRoomCode()" title="Tap to see room code">🔑 CODE</div>
+  </div>
+  <div class="zone"><div class="zlbl" id="opplbl">Opponent</div><div class="ohand" id="opph"></div></div>
+  <div class="table">
+    <div class="pile"><div class="plbl">Draw</div><div class="deck" id="drawp" onclick="doDraw()">🂠</div><div class="dcnt" id="dcnt">52</div></div>
+    <div class="pile"><div class="plbl">Discard</div><div id="discp" class="disc-row"></div></div>
+    <div class="melds-area"><div class="zlbl">Melds on Table</div><div id="meldsg" class="melds-wrap"></div></div>
+  </div>
+  <div class="zone"><div class="zlbl">Your Hand — select then use actions below</div><div class="phand" id="myhand"></div></div>
+  <div class="abar">
+    <button class="btn gold" id="bm" onclick="doMeld()" disabled>Lay Meld</button>
+    <button class="btn out" id="bl" onclick="doLayoff()" disabled>Lay Off</button>
+    <button class="btn out" id="bd" onclick="doDiscard()" disabled>Discard</button>
+    <span class="hint" id="hint">Draw a card to begin</span>
+  </div>
+</div>
+<script>
+const SUITS=['♠','♥','♦','♣'];
+
+// ── SOUNDS (Web Audio API - no files needed) ──
+let audioCtx=null;
+function getAudio(){if(!audioCtx)audioCtx=new(window.AudioContext||window.webkitAudioContext)();return audioCtx}
+function playTone(freq,dur,type='sine',vol=0.3){
+  try{
+    const ctx=getAudio();
+    const o=ctx.createOscillator(),g=ctx.createGain();
+    o.connect(g);g.connect(ctx.destination);
+    o.type=type;o.frequency.value=freq;
+    g.gain.setValueAtTime(vol,ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001,ctx.currentTime+dur);
+    o.start();o.stop(ctx.currentTime+dur);
+  }catch(e){}
+}
+function soundDraw(){playTone(440,.15,'sine',.2);setTimeout(()=>playTone(550,.15,'sine',.15),100)}
+function soundMeld(){
+  // Magical sparkle - ascending arpeggio with shimmer
+  const notes=[523,659,784,1047,1319];
+  notes.forEach((f,i)=>setTimeout(()=>playTone(f,.25,'sine',.25),i*80));
+  // Add a shimmer layer
+  setTimeout(()=>{
+    [1047,1319,1568].forEach((f,i)=>setTimeout(()=>playTone(f,.3,'sine',.1),i*60));
+  },200);
+}
+function soundDiscard(){playTone(330,.2,'sine',.2)}
+function soundYourTurn(){playTone(660,.15);setTimeout(()=>playTone(880,.3),150)}
+function soundWin(){[523,659,784,1047].forEach((f,i)=>setTimeout(()=>playTone(f,.3),i*120))}
+function soundError(){playTone(200,.3,'sawtooth',.2)}
+const RANKS=['A','2','3','4','5','6','7','8','9','10','J','Q','K'];
+const RVAL={A:15,2:5,3:5,4:5,5:5,6:5,7:5,8:5,9:5,10:10,J:10,Q:10,K:10};
+let myId=null,roomId=null,gref=null,gs=null,sel=[],drew=false,lastDrawnIdx=-1;
+
+// ── UTILS ──
+function J(x){return JSON.stringify(x)}
+function P(x){try{return JSON.parse(x||'[]')}catch{return[]}}
+function cp(x){return JSON.parse(JSON.stringify(x))}
+function shuf(a){const b=[...a];for(let i=b.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[b[i],b[j]]=[b[j],b[i]]}return b}
+let tt;
+function toast(m){const e=document.getElementById('toast');e.textContent=m;e.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>e.classList.remove('show'),2500)}
+
+function makeDeck(){
+  const d=[];
+  for(const s of SUITS)for(const r of RANKS)d.push({s,r,c:(s==='♥'||s==='♦')?'red':'blk'});
+  return shuf(d);
+}
+function sortHand(h){
+  const so={'♠':0,'♥':1,'♦':2,'♣':3};
+  return [...h].sort((a,b)=>{const sd=(so[a.s]||0)-(so[b.s]||0);return sd!==0?sd:RANKS.indexOf(a.r)-RANKS.indexOf(b.r)});
+}
+function sortMeld(cards){
+  if(!cards||!cards.length)return cards;
+  if(cards.every(c=>c.r===cards[0].r)){const so={'♠':0,'♥':1,'♦':2,'♣':3};return[...cards].sort((a,b)=>(so[a.s]||0)-(so[b.s]||0))}
+  const hasAce=cards.some(c=>c.r==='A'),hasKing=cards.some(c=>c.r==='K'),has2=cards.some(c=>c.r==='2');
+  if(hasAce&&hasKing&&!has2)return[...cards].sort((a,b)=>{const av=a.r==='A'?13:RANKS.indexOf(a.r),bv=b.r==='A'?13:RANKS.indexOf(b.r);return av-bv});
+  return[...cards].sort((a,b)=>RANKS.indexOf(a.r)-RANKS.indexOf(b.r));
+}
+function mkCard(c,sel,active){
+  if(!c)return document.createElement('div');
+  const rank=c.r||'?',suit=c.s||'?',col=(suit==='♥'||suit==='♦')?'red':'blk';
+  const el=document.createElement('div');
+  el.className=`card ${col}${sel?' sel':''}${!active?' dis':''}`;
+  el.innerHTML=`<span class="rk">${rank}</span><span class="st">${suit}</span><span class="sc">${suit}</span>`;
+  return el;
+}
+
+// ── PARSE / FLAT ──
+function parse(d){
+  if(!d)return null;
+  return{deck:P(d.deck),h1:P(d.h1),h2:P(d.h2),disc:P(d.disc),melds:P(d.melds),
+    sc:d.sc||{p1:0,p2:0},turn:d.turn||'p1',phase:d.phase||'draw',
+    names:d.names||{p1:'P1',p2:'P2'},round:d.round||1};
+}
+function flat(s){
+  return{deck:J(s.deck),h1:J(s.h1),h2:J(s.h2),disc:J(s.disc),melds:J(s.melds),
+    'sc/p1':s.sc.p1,'sc/p2':s.sc.p2,turn:s.turn,phase:s.phase,
+    'names/p1':s.names.p1,'names/p2':s.names.p2,round:s.round||1};
+}
+
+// ── LOBBY ACTIONS ──
+function doCreate(){
+  const name=document.getElementById('pname').value.trim();
+  if(!name)return toast('Enter your name first!');
+  const code=Math.random().toString(36).substring(2,8).toUpperCase();
+  roomId=code; myId='p1';
+  gref=db.ref('rooms/'+code);
+  gref.set({status:'waiting',p1:{name,score:0},p2:null,createdAt:Date.now()});
+  document.getElementById('dcode').textContent=code;
+  document.querySelector('.box').style.display='none';
+  document.getElementById('waiting').style.display='block';
+  gref.on('value',snap=>{
+    const d=snap.val();
+    if(d&&d.p2&&d.status==='playing'){gref.off();startGame(d)}
+  });
+}
+
+function doJoin(){
+  const name=document.getElementById('pname').value.trim();
+  const code=document.getElementById('jcode').value.trim().toUpperCase();
+  if(!name)return toast('Enter your name first!');
+  if(code.length!==6)return toast('Enter the 6-letter room code');
+  roomId=code; myId='p2';
+  gref=db.ref('rooms/'+code);
+  gref.once('value').then(snap=>{
+    const d=snap.val();
+    if(!d)return toast('Room not found!');
+    if(d.status!=='waiting')return toast('Game already started!');
+    const deck=makeDeck(),h1=deck.splice(0,7),h2=deck.splice(0,7),disc=[deck.splice(0,1)[0]];
+    const ns={deck:J(deck),h1:J(sortHand(h1)),h2:J(sortHand(h2)),disc:J(disc),melds:J([]),
+      sc:{p1:0,p2:0},turn:'p1',phase:'draw',names:{p1:d.p1.name,p2:name},round:1};
+    gref.update({status:'playing','p2/name':name,'p2/score':0,...ns}).then(()=>{
+      gref.once('value').then(s=>startGame(s.val()));
+    });
+  });
+}
+
+function doRejoin(){
+  const name=document.getElementById('pname').value.trim();
+  const code=document.getElementById('jcode').value.replace(/\s/g,'').trim().toUpperCase();
+  if(!name)return toast('Enter your name first!');
+  if(code.length!==6)return toast('Enter the 6-letter room code');
+  roomId=code; myId='p2';
+  gref=db.ref('rooms/'+code);
+  gref.once('value').then(snap=>{
+    const d=snap.val();
+    if(!d){roomId=null;gref=null;return toast('Room not found!')}
+    const n1=((d.names&&d.names.p1)||(d.p1&&d.p1.name)||'').toLowerCase();
+    if(name.toLowerCase()===n1)myId='p1'; else myId='p2';
+    gref.update({['names/'+myId]:name,[myId+'/name']:name}).then(()=>{
+      gref.once('value').then(s=>startGame(s.val()));
+    });
+  });
+}
+
+function doGoLobby(){
+  // Just disconnect locally - keep the room alive so both can rejoin
+  if(gref)gref.off();
+  // Don't remove the room! Keep it for rejoining
+  const savedCode=roomId;
+  roomId=null;myId=null;gref=null;gs=null;sel=[];drew=false;
+  document.getElementById('game').style.display='none';
+  document.getElementById('wins').classList.remove('open');
+  document.getElementById('lobby').style.display='flex';
+  document.getElementById('waiting').style.display='none';
+  document.querySelector('.box').style.display='block';
+  // Pre-fill the room code so they can easily rejoin
+  if(savedCode)document.getElementById('jcode').value=savedCode;
+}
+
+// ── GAME START ──
+function startGame(raw){
+  document.getElementById('lobby').style.display='none';
+  document.getElementById('game').style.display='flex';
+  // Push state so Android back button triggers popstate
+  history.pushState(null,'',window.location.href);
+  sel=[];drew=false;
+  gs=parse(raw);
+  gref.on('value',snap=>{
+    const d=snap.val();
+    if(!d)return;
+    const prevRound=gs?gs.round:0;
+    const wasMine=gs?gs.turn===myId:false;
+    gs=parse(d);sel=[];
+    drew=(gs.phase==='play'&&gs.turn===myId);
+    // Play sound when it becomes your turn
+    if(!wasMine&&gs.turn===myId){
+      soundYourTurn();
+      const ti=document.getElementById('turni');
+      if(ti){ti.classList.add('your-turn-glow');setTimeout(()=>ti.classList.remove('your-turn-glow'),3000);}
+    }
+    render();
+    if(d.gameOver)showEnd(d.winner,d.finalSc,true);
+    else if(d.roundOver)showEnd(d.roundWinner,d.finalSc,false);
+    updateReadyBtn(d);
+  });
+  render();
+}
+
+// ── RENDER ──
+function render(){
+  if(!gs)return;
+  const oppId=myId==='p1'?'p2':'p1';
+  const myH=myId==='p1'?gs.h1:gs.h2;
+  const oppH=myId==='p1'?gs.h2:gs.h1;
+  const mine=gs.turn===myId;
+  document.getElementById('sme-n').textContent=gs.names[myId]||'You';
+  document.getElementById('sopp-n').textContent=gs.names[oppId]||'Opp';
+  document.getElementById('sme-v').textContent=gs.sc[myId]||0;
+  document.getElementById('sopp-v').textContent=gs.sc[oppId]||0;
+  document.getElementById('sme').className='si'+(mine?' act':'');
+  document.getElementById('sopp').className='si'+(!mine?' act':'');
+  const ti=document.getElementById('turni');
+  ti.textContent=mine?(gs.phase==='draw'?'⟳ Draw':'▶ Your turn'):`${gs.names[oppId]}'s turn`;
+  ti.className='turn'+(mine?' me':'');
+  document.getElementById('opplbl').textContent=`${gs.names[oppId]}'s Hand (${oppH.length})`;
+  const oh=document.getElementById('opph');
+  oh.innerHTML='';
+  oppH.forEach(()=>{const e=document.createElement('div');e.className='cbk';e.textContent='🂠';oh.appendChild(e)});
+  document.getElementById('dcnt').textContent=gs.deck.length+' left';
+  const rc=document.getElementById('roomcode');
+  if(rc&&roomId)rc.textContent='🔑 '+roomId;
+  document.getElementById('drawp').style.opacity=mine&&gs.phase==='draw'?'1':'0.5';
+  // Discard
+  const dp=document.getElementById('discp');
+  dp.innerHTML='';
+  gs.disc.forEach((card,i)=>{
+    const wrap=document.createElement('div');wrap.className='disc-wrap';
+    const ce=mkCard(card,false,mine&&gs.phase==='draw');
+    if(mine&&gs.phase==='draw')ce.onclick=()=>doDrawDisc(i);
+    wrap.appendChild(ce);dp.appendChild(wrap);
+  });
+  // Melds
+  const mg=document.getElementById('meldsg');
+  mg.innerHTML='';
+  gs.melds.forEach((meld,mi)=>{
+    const g=document.createElement('div');g.className='meld-grp';
+    const canLay=mine&&gs.phase==='play'&&sel.length===1;
+    if(canLay){
+      const myH2=myId==='p1'?gs.h1:gs.h2;
+      const card=myH2[sel[0]];
+      if(card&&canLayoff(card,meld)){g.style.borderColor='var(--gold)';g.style.boxShadow='0 0 8px rgba(201,168,76,.5)';g.onclick=()=>doLayoff(mi)}
+    }
+    meld.forEach(c=>{g.appendChild(mkCard(c,false,false))});
+    mg.appendChild(g);
+  });
+  // Hand
+  const mh=document.getElementById('myhand');
+  mh.innerHTML='';
+  const canSel=mine&&gs.phase==='play';
+  // Find new card - after sort it's the one that doesn't match previous position
+  // Use lastDrawnIdx: if -1 no new card, if >=0 that index, if -2 highlight last card
+  const highlightIdx = lastDrawnIdx === -2 ? myH.length-1 : lastDrawnIdx;
+  myH.forEach((c,i)=>{
+    const ce=mkCard(c,sel.includes(i),canSel);
+    if(canSel)ce.onclick=()=>{const idx=sel.indexOf(i);if(idx>=0)sel.splice(idx,1);else sel.push(i);render()};
+    else ce.classList.add('dis');
+    // Flash the newly drawn card
+    if(i===highlightIdx && drew && lastDrawnIdx!==-1){
+      ce.classList.add('new-card');
+      setTimeout(()=>ce.classList.remove('new-card'),600);
+    }
+    mh.appendChild(ce);
+  });
+  const canPlay=mine&&gs.phase==='play';
+  document.getElementById('bm').disabled=!canPlay;
+  document.getElementById('bl').disabled=!canPlay;
+  document.getElementById('bd').disabled=!canPlay;
+
+  // Visual hints - flash next action
+  const drawEl=document.getElementById('drawp');
+  const discardBtn=document.getElementById('bd');
+  const meldBtn=document.getElementById('bm');
+  // Remove all hints first
+  drawEl.classList.remove('flash-hint');
+  discardBtn.classList.remove('flash-hint');
+  meldBtn.classList.remove('flash-hint');
+  document.getElementById('bl').classList.remove('flash-hint');
+  document.getElementById('hint').classList.remove('hint-label');
+
+  if(mine&&gs.phase==='draw'){
+    drawEl.classList.add('flash-hint');
+  } else if(mine&&gs.phase==='play'&&sel.length>0){
+    const hand=myId==='p1'?gs.h1:gs.h2;
+    if(sel.length>=3){
+      const cards=sel.map(i=>hand[i]).filter(Boolean);
+      if(cards.length>=3&&validMeld(cards)){
+        meldBtn.classList.add('flash-hint');
+      } else {
+        discardBtn.classList.add('flash-hint');
+      }
+    } else if(sel.length===1){
+      const card=hand[sel[0]];
+      const canLay=card&&gs.melds&&gs.melds.some(m=>canLayoff(card,m));
+      if(canLay) document.getElementById('bl').classList.add('flash-hint');
+      else discardBtn.classList.add('flash-hint');
+    }
+  }
+
+  let h='';
+  if(!mine)h=`Waiting for ${gs.names[oppId]}…`;
+  else if(gs.phase==='draw'){h='⟳ Draw a card to start your turn';document.getElementById('hint').classList.add('hint-label');}
+  else if(!sel.length){h='👆 Select cards from your hand';}
+  else if(sel.length>=3){h=`Lay Meld, Lay Off, or Discard`;}
+  else{h=`${sel.length} card(s) selected — Lay Off or Discard`;}
+  document.getElementById('hint').textContent=h;
+}
+
+// ── ACTIONS ──
+function myTurn(){if(!gs||gs.turn!==myId){toast("Not your turn!");return false}return true}
+
+function doDraw(){
+  if(!myTurn())return;
+  if(gs.phase!=='draw')return toast('Already drew!');
+  if(!gs.deck.length)return toast('Deck empty!');
+  const s=cp(gs);const card=s.deck.pop();
+  (myId==='p1'?s.h1:s.h2).push(card);
+  if(myId==='p1')s.h1=sortHand(s.h1);else s.h2=sortHand(s.h2);
+  s.phase='play';drew=true;soundDraw();
+  lastDrawnIdx=(myId==='p1'?s.h1:s.h2).length-1;
+  push(s);
+}
+
+function doDrawDisc(fromIdx){
+  if(!myTurn())return;
+  if(gs.phase!=='draw')return toast('Already drew!');
+  if(!gs.disc.length)return toast('Discard empty!');
+  const bottomCard=gs.disc[fromIdx];
+  const hand=myId==='p1'?gs.h1:gs.h2;
+  const extra=gs.disc.slice(fromIdx+1);
+  const tempHand=[...hand,...extra];
+  if(!canUseInMeld(bottomCard,tempHand)){soundError();return toast(`Must be able to use ${bottomCard.r}${bottomCard.s} in a meld!`);}
+  const s=cp(gs);const picked=s.disc.splice(fromIdx);
+  const h=myId==='p1'?s.h1:s.h2;picked.forEach(c=>h.push(c));
+  if(myId==='p1')s.h1=sortHand(s.h1);else s.h2=sortHand(s.h2);
+  s.phase='play';drew=true;soundDraw();
+  // Mark the last card added (after sort it will be somewhere in hand)
+  lastDrawnIdx=-2; // special flag - will find by marking before/after sort
+  if(picked.length>1)toast(`Picked up ${picked.length} cards!`);
+  push(s);
+}
+
+function doMeld(){
+  if(!myTurn())return;
+  if(gs.phase!=='play')return toast('Draw first!');
+  if(sel.length<3)return toast('Select 3+ cards for a meld');
+  const hand=myId==='p1'?gs.h1:gs.h2;
+  const cards=sel.map(i=>hand[i]);
+  if(!validMeld(cards))return toast('Invalid meld! Need same rank or same suit in sequence');
+  const s=cp(gs);const h=myId==='p1'?s.h1:s.h2;
+  const pts=cards.reduce((a,c)=>a+RVAL[c.r],0);
+  s.sc[myId]=(s.sc[myId]||0)+pts;
+  [...sel].sort((a,b)=>b-a).forEach(i=>h.splice(i,1));
+  s.melds.push(sortMeld(cards));sel=[];
+  toast(`+${pts} pts!`);soundMeld();
+  checkWin(s);
+}
+
+function doLayoff(forceMi){
+  if(!myTurn())return;
+  if(gs.phase!=='play')return toast('Draw first!');
+  if(sel.length!==1)return toast('Select 1 card to lay off');
+  const hand=myId==='p1'?gs.h1:gs.h2;
+  const card=hand[sel[0]];
+  const s=cp(gs);const h=myId==='p1'?s.h1:s.h2;
+  let ok=false;
+  const order=forceMi!=null?[forceMi,...s.melds.map((_,i)=>i).filter(i=>i!==forceMi)]:s.melds.map((_,i)=>i);
+  for(const i of order){
+    if(canLayoff(card,s.melds[i])){
+      s.melds[i].push(card);s.melds[i]=sortMeld(s.melds[i]);
+      s.sc[myId]=(s.sc[myId]||0)+RVAL[card.r];
+      h.splice(sel[0],1);sel=[];ok=true;
+      toast(`+${RVAL[card.r]} pts!`);soundMeld();break;
+    }
+  }
+  if(!ok)return toast(`Can't lay off ${card.r}${card.s} on any meld`);
+  checkWin(s);
+}
+
+function doDiscard(){
+  if(!myTurn())return;
+  if(gs.phase!=='play')return toast('Draw first!');
+  if(sel.length!==1)return toast('Select 1 card to discard');
+  const s=cp(gs);const h=myId==='p1'?s.h1:s.h2;
+  const card=h.splice(sel[0],1)[0];
+  s.disc.push(card);s.phase='draw';s.turn=myId==='p1'?'p2':'p1';sel=[];drew=false;
+  soundDiscard();lastDrawnIdx=-1;
+  if(!s.deck.length&&s.disc.length>1){const top=s.disc.pop();s.deck=shuf(s.disc);s.disc=[top];toast('Deck reshuffled!')}
+  checkWin(s);
+}
+
+// ── VALIDATION ──
+function validMeld(cards){
+  if(cards.every(c=>c.r===cards[0].r))return true;
+  if(cards.every(c=>c.s===cards[0].s)){
+    const n=cards.length;if(n<3)return false;
+    const vs=cards.map(c=>RANKS.indexOf(c.r)).sort((a,b)=>a-b);
+    let ok=true;for(let i=1;i<vs.length;i++)if(vs[i]-vs[i-1]!==1){ok=false;break}
+    if(ok)return true;
+    const hasAce=cards.some(c=>c.r==='A');
+    if(hasAce){
+      const vs2=cards.map(c=>c.r==='A'?13:RANKS.indexOf(c.r)).sort((a,b)=>a-b);
+      let ok2=true;for(let i=1;i<vs2.length;i++)if(vs2[i]-vs2[i-1]!==1){ok2=false;break}
+      if(ok2)return true;
+      const all=cards.map(c=>RANKS.indexOf(c.r));
+      for(let off=0;off<13;off++){
+        const sh=all.map(v=>(v-off+13)%13).sort((a,b)=>a-b);
+        let ok3=true;for(let i=1;i<sh.length;i++)if(sh[i]-sh[i-1]!==1){ok3=false;break}
+        if(ok3)return true;
+      }
+    }
+  }
+  return false;
+}
+function canLayoff(card,meld){
+  // Set: same rank
+  if(meld.every(c=>c.r===meld[0].r))return card.r===meld[0].r;
+  // Run: same suit - card must extend either end
+  if(meld.every(c=>c.s===meld[0].s)&&card.s===meld[0].s){
+    const vs=meld.map(c=>RANKS.indexOf(c.r)).sort((a,b)=>a-b);
+    const cv=RANKS.indexOf(card.r);
+    // Normal extension: one below lowest or one above highest
+    if(cv===vs[0]-1||cv===vs[vs.length-1]+1)return true;
+    // Ace-high: A can go after K
+    if(card.r==='A'&&vs[vs.length-1]===12)return true;
+    // Ace-high meld: card can go before Q (index 10) when meld has A treated as 13
+    if(meld.some(c=>c.r==='A')){
+      const vs2=meld.map(c=>c.r==='A'?13:RANKS.indexOf(c.r)).sort((a,b)=>a-b);
+      if(cv===vs2[0]-1||cv===vs2[vs2.length-1]+1)return true;
+    }
+    // Round-the-corner wrapping
+    const all=meld.map(c=>RANKS.indexOf(c.r));
+    for(let off=1;off<13;off++){
+      const sh=all.map(v=>(v-off+13)%13).sort((a,b)=>a-b);
+      const cs=(cv-off+13)%13;
+      if(cs===sh[0]-1||cs===sh[sh.length-1]+1)return true;
+    }
+  }
+  return false;
+}
+function canUseInMeld(card,hand){
+  for(let i=0;i<hand.length;i++)for(let j=i+1;j<hand.length;j++)if(validMeld([card,hand[i],hand[j]]))return true;
+  for(const meld of (gs?gs.melds:[]))if(canLayoff(card,meld))return true;
+  return false;
+}
+
+// ── WIN / ROUND ──
+function checkWin(s){
+  const myH=myId==='p1'?s.h1:s.h2;
+  const oppId=myId==='p1'?'p2':'p1';
+  const oppH=myId==='p1'?s.h2:s.h1;
+  if(myH.length===0){
+    const pen=oppH.reduce((a,c)=>a+RVAL[c.r],0);
+    s.sc[oppId]=(s.sc[oppId]||0)-pen;
+    if(s.sc.p1>=500||s.sc.p2>=500){
+      const w=s.sc.p1>s.sc.p2?s.names.p1:s.names.p2;
+      gref.update({gameOver:true,winner:w,finalSc:s.sc,...flat(s)});
+    } else {
+      gref.update({roundOver:true,roundWinner:s.names[myId],roundPenalty:-pen,finalSc:s.sc,ready_p1:false,ready_p2:false,...flat(s)});
+    }
+    return;
+  }
+  push(s);
+}
+
+function showEnd(winner,sc,isGame){
+  const me=winner===gs?.names[myId];
+  if(me)soundWin();else soundError();
+  const s=sc||{};
+  document.getElementById('wt').textContent=isGame?(me?'🏆 You Win the Game!':winner+' Wins!'):(me?'🎉 Round Won!':'Round Lost');
+  document.getElementById('wm').innerHTML=
+    `<strong>${winner}</strong> ${isGame?'wins the game':'wins this round'}!<br><br>`+
+    `${gs?.names?.p1||'P1'}: <strong>${s.p1||0}</strong> pts &nbsp;·&nbsp; ${gs?.names?.p2||'P2'}: <strong>${s.p2||0}</strong> pts<br>`+
+    (isGame?'':`<span style="font-size:.85rem;opacity:.6">First to 500 wins · click I'm Ready when set</span>`);
+  const btn=document.getElementById('wbtn');
+  btn.textContent=isGame?'Play Again':'Next Round';
+  btn.disabled=false;
+  btn.onclick=isGame?doGoLobby:startNextRound;
+  document.getElementById('wins').classList.add('open');
+}
+
+function updateReadyBtn(d){
+  // No waiting system needed - button always available
+  if(!d.roundOver)return;
+  const btn=document.getElementById('wbtn');
+  if(btn){btn.textContent="Next Round";btn.disabled=false;btn.onclick=startNextRound}
+}
+
+function startNextRound(){
+  // Any player can start the next round
+  const p1s=gs.sc?gs.sc.p1||0:0,p2s=gs.sc?gs.sc.p2||0:0;
+  const p1n=gs.names?gs.names.p1:'P1',p2n=gs.names?gs.names.p2:'P2';
+  const next=gs.turn==='p1'?'p2':'p1',nr=(gs.round||1)+1;
+  const deck=makeDeck(),h1=deck.splice(0,7),h2=deck.splice(0,7),disc=[deck.splice(0,1)[0]];
+  document.getElementById('wins').classList.remove('open');
+  gref.set({
+    status:'playing',round:nr,roundOver:false,gameOver:false,
+    roundWinner:'',roundPenalty:0,winner:'',
+    deck:J(deck),h1:J(sortHand(h1)),h2:J(sortHand(h2)),disc:J(disc),melds:J([]),
+    sc:{p1:p1s,p2:p2s},turn:next,phase:'draw',
+    names:{p1:p1n,p2:p2n},p1:{name:p1n,score:p1s},p2:{name:p2n,score:p2s}
+  });
+}
+
+function dealRound(){startNextRound()}
+
+function push(s){gs=s;gref.update(flat(s))}
+
+window.addEventListener('beforeunload',(e)=>{
+  if(roomId&&gs&&!document.getElementById('wins').classList.contains('open')){e.preventDefault();e.returnValue=''}
+});
+
+// Intercept Android back button during game
+window.addEventListener('popstate',(e)=>{
+  if(roomId&&gs){
+    e.preventDefault();
+    history.pushState(null,'',window.location.href);
+    if(confirm('Leave game?\n\nRoom code: '+roomId+'\n(Your opponent stays in — you can rejoin)')){
+      doGoLobby();
+    }
+  }
+});
+
+// Push a state so back button triggers popstate
+if(history.pushState){
+  history.pushState(null,'',window.location.href);
+}
+
+function showRoomCode(){
+  if(roomId) alert('Room Code: '+roomId+'\n\nShare this with your opponent to rejoin.');
+}
+</script>
+</body>
+</html>
